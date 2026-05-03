@@ -1,4 +1,4 @@
-const PRE_BASED_ANSWERS = {
+export const PRE_BASED_ANSWERS = {
   'voting-age': {
     'ai_is_pro': [
       "If teenagers can work and pay taxes at 16, they deserve a say in how that money is spent. It's about 'no taxation without representation'!",
@@ -81,4 +81,10 @@ const PRE_BASED_ANSWERS = {
   }
 };
 
-module.exports = { PRE_BASED_ANSWERS };
+export const PRE_BASED_PROCESS = {
+  'registration': "To vote, you must be 18+ and registered in the electoral roll. Apply online via the Voters Service Portal (voters.eci.gov.in) or use the Voter Helpline App with proof of age and residence.",
+  'campaigning': "Candidates follow the Model Code of Conduct (MCC) to ensure fair play. It prevents the use of government resources for campaigning and restricts disruptive behavior before polling day.",
+  'evm': "EVMs are standalone, tamper-proof machines used with VVPATs. When you vote, the VVPAT prints a slip showing your choice for 7 seconds, providing a physical verification of your electronic vote.",
+  'counting': "Votes are counted in a secure, transparent environment under the supervision of Returning Officers. Every round is audited, and party agents are present to witness the entire process before the final Result declaration.",
+  'post': "After the results are certified by the ECI, the largest party or coalition is invited to form the government. The elected representatives then take their oath in the Parliament or State Assembly."
+};

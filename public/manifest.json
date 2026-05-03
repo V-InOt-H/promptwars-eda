@@ -5,12 +5,13 @@
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#E8C47C",
-  "description": "Interactive election assistant for first-time Indian voters.",
+  "description": "Interactive AI debate assistant for first-time Indian voters.",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "jest --coverage"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -16,10 +16,13 @@
     "express-rate-limit": "^8.4.1",
     "express-validator": "^7.3.2",
     "helmet": "^8.1.0",
-    "node-cache": "^5.1.2"
+    "morgan": "^1.10.1",
+    "node-cache": "^5.1.2",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^6.3.3"
-  }
+  },
+  "type": "module"
 }

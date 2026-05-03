@@ -1,54 +1,92 @@
-require('dotenv').config();
-const express = require('express');
-const path = require('path');
-const helmet = require('helmet');
-const cors = require('cors');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
-const NodeCache = require('node-cache');
-const { body, validationResult } = require('express-validator');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { PRE_BASED_ANSWERS } = require('./data.js');
+import 'dotenv/config';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import cors from 'cors';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import NodeCache from 'node-cache';
+import morgan from 'morgan';
+import winston from 'winston';
+import { body, validationResult } from 'express-validator';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { PRE_BASED_ANSWERS, PRE_BASED_PROCESS } from './data.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Initialize Cache and Generative AI
-const cache = new NodeCache({ stdTTL: 86400 }); // Cache for 24 hours
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy_key');
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// --- Professional Logging ---
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })
+  ]
+});
 
-// Security and Efficiency Middleware
+// Environment Validation
+if (!process.env.GEMINI_API_KEY) {
+  logger.error('CRITICAL: GEMINI_API_KEY is missing from environment variables.');
+  process.exit(1);
+}
+
+// Middleware
+app.use(morgan('combined'));
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:"]
     }
-  }
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  permittedCrossDomainPolicies: { policy: 'none' }
 }));
 app.use(cors());
 app.use(compression());
+app.use(express.json({ limit: '10kb' }));
+
+// Initialize Cache and Generative AI
+const cache = new NodeCache({ stdTTL: 86400 });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Rate Limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-app.use(express.json({ limit: '10kb' })); // Limit body payload to 10kb
 app.use('/api/', apiLimiter);
 
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1d' }));
 
-// Health check for Cloud Run
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+/**
+ * Health check endpoint for monitoring system status.
+ */
+app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
-// Debate endpoint (Optimized with Pre-based answers & Validation)
+/**
+ * API route for the AI Debate Arena.
+ * Handles user input, looks up pre-based answers, and generates final AI verdicts.
+ */
 app.post('/api/debate', [
   body('history').isArray(),
   body('topic').isString().notEmpty().trim().escape(),
@@ -56,7 +94,7 @@ app.post('/api/debate', [
   body('aiSide').isString().notEmpty().trim().escape(),
   body('round').isInt({ min: 1 }),
   body('maxRounds').isInt({ min: 1, max: 10 }),
-], async (req, res) => {
+], async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -83,25 +121,16 @@ app.post('/api/debate', [
 
     let displayResponse = "";
     
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-    // OPTIMIZATION: If API Key is missing or user wants "Pre-based" answers
-    if (!GEMINI_API_KEY || round <= maxRounds) {
+    // Pre-based logic for speed and efficiency
+    if (round <= maxRounds) {
         const pool = PRE_BASED_ANSWERS[topicId]?.[sideKey] || ["I disagree with your point. My stance is more logical for the future of India."];
-        // Pick based on round or random
         displayResponse = pool[(round - 1) % pool.length];
-        
-        // Add a bit of personality
         const intros = ["Interesting point, but ", "I hear you, however ", "That's a common misconception. ", "Actually, ", "Let's look at the facts: "];
         displayResponse = intros[Math.floor(Math.random() * intros.length)] + displayResponse;
-        
-        // Add a challenge question
-        const questions = [" Don't you think?", " How do you justify your view then?", " Isn't that a bit shortsighted?", " What about the long-term impact?"];
-        displayResponse += questions[Math.floor(Math.random() * questions.length)];
     }
 
-    // FINAL ROUND ONLY: Use Gemini for the Verdict (if API key exists)
-    if (isLast && GEMINI_API_KEY && GEMINI_API_KEY.startsWith('AIza')) {
+    // FINAL ROUND ONLY: Use Gemini for the Verdict
+    if (isLast) {
         const systemPrompt = `You are a sharp, witty AI judge.
 Based on the debate history, provide a final rebuttal and output exactly: VERDICT:{"userScore":0-10,"winner":"you" or "ai" or "draw","summary":"2-sentence fair assessment"}`;
 
@@ -120,81 +149,64 @@ Based on the debate history, provide a final rebuttal and output exactly: VERDIC
                 displayResponse += `\n\nVERDICT:{"userScore":7,"winner":"draw","summary":"Both sides made strong points about ${topicLabel}. A very balanced debate!"}`;
             }
         } catch (e) {
+            logger.warn('AI Verdict Generation failed, using fallback.', { error: e.message });
             displayResponse += `\n\nVERDICT:{"userScore":8,"winner":"you","summary":"You argued with great passion! While we differ, your perspective is vital for our democracy."}`;
         }
-    } else if (isLast) {
-        // Mock Verdict if no API key
-        displayResponse += `\n\nVERDICT:{"userScore":8,"winner":"you","summary":"You argued with great passion! While we differ, your perspective is vital for our democracy to thrive."}`;
     }
 
     res.json({ text: displayResponse });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-// Election process explainer
-app.get('/api/election-process', async (req, res) => {
+/**
+ * Route for explaining parts of the Indian election process.
+ * Utilizes caching for high performance.
+ */
+app.get('/api/election-process', async (req, res, next) => {
   try {
     let { step } = req.query;
-    if (!step || typeof step !== 'string') {
-        step = 'registration';
-    }
+    if (!step || typeof step !== 'string') step = 'registration';
     
-    // Check cache
-    const cacheKey = `process_${step}`;
-    const cachedResponse = cache.get(cacheKey);
-    if (cachedResponse) {
-        return res.json({ text: cachedResponse });
+    // 1. Static pre-based answers for common steps
+    if (PRE_BASED_PROCESS[step]) {
+      return res.json({ text: PRE_BASED_PROCESS[step] });
     }
 
-    const steps = {
+    // 2. Cache for dynamic steps
+    const cacheKey = `process_${step}`;
+    const cachedResponse = cache.get(cacheKey);
+    if (cachedResponse) return res.json({ text: cachedResponse });
+
+    const stepsMap = {
       registration: 'Voter registration process with ECI, documents needed, deadline',
       evm: 'Electronic Voting Machine process, VVPAT, security measures',
       campaigning: 'Election campaign rules, ECI model code of conduct',
       counting: 'Vote counting process, ECI guidelines, result declaration',
       post: 'Post-election procedures, petition process, swearing in'
     };
-    
-    // Quick pre-based explanations for speed
-    const preExplanations = {
-      registration: "Register via the NVSP portal or Voter Helpline App. You'll need an age proof (like Aadhaar) and residence proof. It's the first step to your democratic power!",
-      evm: "EVMs are standalone machines. You press a button, a 'beep' sounds, and the VVPAT prints a slip for 7 seconds so you can verify your vote. Secure and foolproof!",
-      campaigning: "Parties must follow the Model Code of Conduct (MCC). No hate speech or bribing. 48 hours before voting, all loud campaigning must stop (silence period).",
-      counting: "Happens in secure zones monitored by CCTV and all party agents. Every EVM's seal is checked before counting. Accuracy is the top priority.",
-      post: "The party with the majority (272+ seats in Lok Sabha) is invited to form the government. The PM and cabinet are then sworn in by the President."
-    };
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY || !GEMINI_API_KEY.startsWith('AIza')) {
-        const text = preExplanations[step] || "This is a key part of the Indian election process ensuring every vote counts.";
-        // cache pre-explanation
-        cache.set(cacheKey, text);
-        return res.json({ text });
-    }
-
-    const prompt = `Explain the Indian election step: "${steps[step] || step}" in 2 simple sentences for 18-25 year olds.`;
-
+    const prompt = `Explain the Indian election step: "${stepsMap[step] || step}" in 2 simple sentences for 18-25 year olds.`;
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     
-    // Set cache
     cache.set(cacheKey, text);
     res.json({ text });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
-// Election facts ticker
-app.get('/api/election-facts', async (req, res) => {
+/**
+ * API route for the election facts ticker.
+ */
+app.get('/api/election-facts', async (req, res, next) => {
   try {
     const cacheKey = 'election_facts';
     const cachedFacts = cache.get(cacheKey);
-    if (cachedFacts) {
-        return res.json({ facts: cachedFacts });
-    }
+    if (cachedFacts) return res.json({ facts: cachedFacts });
 
     const defaultFacts = [
         "India's 2024 election had 97 crore registered voters—more than the population of USA & EU combined!",
@@ -207,20 +219,20 @@ app.get('/api/election-facts', async (req, res) => {
     cache.set(cacheKey, defaultFacts);
     res.json({ facts: defaultFacts });
   } catch (err) {
-    res.json({ facts: ['India is the world’s largest democracy.'] });
+    next(err);
   }
 });
 
-// Voter eligibility checker
+/**
+ * Eligibility checker endpoint.
+ */
 app.post('/api/check-eligibility', [
     body('age').isInt({ min: 10, max: 120 }),
     body('hasVoterId').isBoolean(),
     body('state').optional().isString().trim().escape()
 ], (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   const { age, hasVoterId, state } = req.body;
   const eligible = age >= 18 && hasVoterId;
@@ -234,4 +246,17 @@ app.post('/api/check-eligibility', [
   });
 });
 
-module.exports = app;
+// --- Global Error Handler ---
+app.use((err, req, res, next) => {
+  logger.error('Unhandled Application Error:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path
+  });
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err.message
+  });
+});
+
+export default app;

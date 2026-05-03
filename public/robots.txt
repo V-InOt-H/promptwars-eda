@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Sitemap: https://election-debate-957343803442.us-central1.run.app/sitemap.xml
