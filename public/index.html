@@ -316,7 +316,7 @@
   <!-- Header -->
   <header>
     <div class="logo">
-      <div class="logo-icon">&#9878;</div>
+      <div class="logo-icon" aria-hidden="true">&#9878;</div>
       Election Arena
     </div>
     <div class="stat-row">
@@ -327,7 +327,7 @@
 
   <!-- Facts Ticker -->
   <div class="ticker-wrapper">
-    <div class="facts-ticker" id="facts-ticker">
+    <div class="facts-ticker" id="facts-ticker" aria-live="polite">
       <span>Loading election facts...</span>
     </div>
   </div>
@@ -368,11 +368,11 @@
           </div>
         </div>
       </div>
-      <div class="verdict-card" id="verdict-card" style="margin-top:14px">
+      <div class="verdict-card" id="verdict-card" style="margin-top:14px" aria-live="assertive">
         <div class="verdict-score" id="v-score"></div>
         <div class="verdict-title" id="v-title"></div>
         <p class="verdict-body" id="v-body"></p>
-        <button class="play-again-btn" onclick="resetAll()">&#8635; Debate another topic</button>
+        <button class="play-again-btn" onclick="resetAll()" title="Start a new debate">&#8635; Debate another topic</button>
       </div>
     </div>
 
@@ -395,14 +395,14 @@
         <div class="checker-form" id="checker-form">
           <div class="form-group">
             <label class="form-label" for="checker-age">Your Age</label>
-            <input type="number" id="checker-age" class="form-input" min="16" max="100" placeholder="e.g. 19">
+            <input type="number" id="checker-age" name="checker-age" class="form-input" min="16" max="100" placeholder="e.g. 19">
           </div>
           <div class="form-group">
             <label class="form-label" for="checker-state">State (optional)</label>
-            <input type="text" id="checker-state" class="form-input" placeholder="e.g. Tamil Nadu">
+            <input type="text" id="checker-state" name="checker-state" class="form-input" placeholder="e.g. Tamil Nadu">
           </div>
-          <label class="checkbox-wrapper">
-            <input type="checkbox" id="checker-voter-id">
+          <label class="checkbox-wrapper" for="checker-voter-id">
+            <input type="checkbox" id="checker-voter-id" name="checker-voter-id">
             <span class="checkbox-label">I have a valid Voter ID (EPIC)</span>
           </label>
           <button class="check-btn" onclick="checkEligibility()">Check My Eligibility</button>
