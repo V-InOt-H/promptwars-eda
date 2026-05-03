@@ -4,206 +4,315 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Election Debate Arena + Process Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg: #f7f7f5;
-      --surface: #ffffff;
-      --surface2: #f1f0eb;
-      --border: rgba(0,0,0,0.10);
-      --border2: rgba(0,0,0,0.18);
-      --text: #1a1a1a;
-      --text2: #666660;
-      --text3: #999990;
-      --blue: #185FA5;
-      --blue-bg: #E6F1FB;
-      --blue-text: #0C447C;
-      --coral: #993C1D;
-      --coral-bg: #FAECE7;
-      --coral-text: #712B13;
-      --green: #1A7B42;
-      --green-bg: #E6F5ED;
+      --bg: #111111;
+      --surface: rgba(255,255,255,0.06);
+      --surface-hover: rgba(255,255,255,0.10);
+      --border: rgba(255,255,255,0.10);
+      --border-bright: rgba(255,255,255,0.20);
+      --text: #FFFFFF;
+      --text2: #A0A0A0;
+      --text3: #666666;
+      --primary: #FFFFFF;
+      --primary-glow: rgba(255,255,255,0.08);
+      --accent: #E8C47C;
+      --accent-glow: rgba(232,196,124,0.25);
+      --success: #4ADE80;
+      --danger: #F87171;
+      --radius-lg: 20px;
       --radius: 12px;
       --radius-sm: 8px;
     }
-    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; line-height: 1.6;
+    }
+
+    h1, h2, h3, .logo, .tab, .verdict-score { font-family: 'Outfit', sans-serif; }
+
+    /* Subtle grid pattern bg */
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: -1;
+      background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
     /* Header */
     header {
-      background: var(--surface); border-bottom: 0.5px solid var(--border);
-      padding: 0 1.5rem; height: 56px; display: flex; align-items: center;
-      justify-content: space-between; position: sticky; top: 0; z-index: 10;
+      background: rgba(17,17,17,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
     }
-    .logo { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .logo { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; color: #fff; }
     .logo-icon {
-      width: 28px; height: 28px; border-radius: 8px; background: var(--blue);
-      display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px;
+      width: 30px; height: 30px; border-radius: 8px;
+      background: #fff; color: #111;
+      display: flex; align-items: center; justify-content: center; font-size: 15px;
     }
-    .stat-row { display: flex; gap: 8px; }
-    .stat { background: var(--surface2); border-radius: 20px; padding: 5px 13px; font-size: 12px; color: var(--text2); }
-    .stat b { color: var(--text); font-weight: 600; }
-
-    /* Tabs (Innovative: Multi-feature navigation) */
-    .tabs {
-      display: flex; gap: 0; max-width: 760px; margin: 1rem auto 0; padding: 0 1rem;
-      background: var(--surface); border-radius: var(--radius) var(--radius) 0 0;
-      border: 0.5px solid var(--border); border-bottom: none;
+    .stat-row { display: flex; gap: 10px; }
+    .stat {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 5px 14px; font-size: 13px;
+      color: var(--text2); font-family: 'Outfit';
     }
-    .tab {
-      flex: 1; padding: 12px 0; text-align: center; font-size: 13px; font-weight: 600;
-      color: var(--text2); cursor: pointer; border: none; background: none;
-      font-family: inherit; transition: all 0.15s; border-bottom: 3px solid transparent;
-    }
-    .tab[aria-selected="true"] { color: var(--blue); border-bottom-color: var(--blue); }
-    .tab:focus { outline: 2px solid var(--blue); outline-offset: -2px; }
+    .stat b { color: #fff; font-weight: 700; }
 
-    /* Main Content */
-    main { max-width: 760px; margin: 0 auto 2rem; padding: 0 1rem; display: flex; flex-direction: column; gap: 16px; }
-    .tab-content { display: none; background: var(--surface); border: 0.5px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 1.25rem; }
-    .tab-content.active { display: block; }
-
-    /* Facts Ticker (Innovative) */
+    /* Facts Ticker */
+    .ticker-wrapper { max-width: 780px; margin: 1.25rem auto 0; padding: 0 1rem; }
     .facts-ticker {
-      background: var(--blue-bg); padding: 8px 16px; border-radius: var(--radius-sm);
-      font-size: 12px; color: var(--blue-text); overflow: hidden; white-space: nowrap;
-      margin-bottom: 16px;
+      background: rgba(232,196,124,0.08); border: 1px solid rgba(232,196,124,0.2);
+      padding: 9px 16px; border-radius: 100px; font-size: 13px; font-weight: 500;
+      color: var(--accent); overflow: hidden; white-space: nowrap;
+      display: flex; align-items: center; gap: 10px;
     }
-    .facts-ticker span { display: inline-block; animation: scroll 30s linear infinite; }
+    .facts-ticker::before { content: "●"; font-size: 10px; animation: pulse 1.5s infinite; color: var(--accent); }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    .facts-ticker span { display: inline-block; animation: scroll 28s linear infinite; }
     @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-    /* Shared Card Styles */
-    .card { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; background: var(--surface); }
-    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 12px; }
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 2px; max-width: 780px; margin: 1.25rem auto 0; padding: 4px;
+      background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border: 1px solid var(--border); border-bottom: none;
+    }
+    .tab {
+      flex: 1; padding: 13px 0; text-align: center; font-size: 14px; font-weight: 600;
+      color: var(--text3); cursor: pointer; border: none; background: transparent;
+      border-radius: var(--radius) var(--radius) 0 0; transition: all 0.2s; position: relative;
+    }
+    .tab::after {
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 0; height: 2px; background: #fff; transition: width 0.3s; border-radius: 2px;
+    }
+    .tab:hover { color: var(--text2); }
+    .tab[aria-selected="true"] { color: #fff; }
+    .tab[aria-selected="true"]::after { width: 100%; }
 
-    /* Debate Arena (Existing + Updated) */
+    /* Main */
+    main { max-width: 780px; margin: 0 auto 3rem; padding: 0 1rem; }
+    .tab-content {
+      display: none; background: rgba(255,255,255,0.03); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 2rem;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+    .tab-content.active { display: block; }
+
+    .hero { text-align: center; padding-bottom: 20px; }
+    .hero h1 { font-size: 30px; font-weight: 800; color: #fff; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .hero p { font-size: 14px; color: var(--text2); }
+
+    /* Cards */
+    .card {
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 1.5rem; background: var(--surface);
+    }
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+      color: var(--text3); margin-bottom: 14px; font-family: 'Outfit';
+    }
+
+    /* Topic Chips */
     .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
-      font-size: 13px; padding: 7px 15px; border: 0.5px solid var(--border2);
-      border-radius: 20px; cursor: pointer; background: none; color: var(--text2);
-      transition: all 0.15s; font-family: inherit;
+      font-size: 13px; font-weight: 500; padding: 9px 16px;
+      border: 1px solid var(--border); border-radius: 100px;
+      cursor: pointer; background: transparent; color: var(--text2);
+      transition: all 0.2s; font-family: 'Inter';
     }
-    .chip:hover { background: var(--surface2); color: var(--text); }
-    .chip.active { background: var(--blue-bg); border-color: #85B7EB; color: var(--blue-text); font-weight: 600; }
-    .stance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .chip:hover { border-color: var(--border-bright); color: #fff; }
+    .chip.active {
+      background: #fff; border-color: #fff; color: #111; font-weight: 600;
+    }
+
+    /* Stance */
+    .stance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
     .stance-card {
-      border: 0.5px solid var(--border); border-radius: var(--radius);
-      padding: 1rem 1.1rem; cursor: pointer; transition: all 0.15s; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 1.2rem; cursor: pointer; background: transparent; transition: all 0.2s;
     }
-    .stance-card:hover { background: var(--surface2); }
-    .stance-card.chosen-you { border-color: var(--blue); background: var(--blue-bg); }
-    .stance-card.chosen-ai { border-color: var(--coral); background: var(--coral-bg); }
-    .stance-owner { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; margin-bottom: 5px; }
-    .stance-owner.you { color: var(--blue); }
-    .stance-owner.ai { color: var(--coral); }
-    .stance-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-    .stance-sub { font-size: 11px; color: var(--text2); }
-    .battle-card { border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .stance-card:hover { border-color: var(--border-bright); background: var(--surface); }
+    .stance-card.chosen-you { border-color: #fff; background: rgba(255,255,255,0.08); }
+    .stance-card.chosen-ai { border-color: var(--accent); background: rgba(232,196,124,0.06); }
+    .stance-owner { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 6px; font-family: 'Outfit'; }
+    .stance-owner.you { color: #fff; }
+    .stance-owner.ai { color: var(--accent); }
+    .stance-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 3px; }
+    .stance-sub { font-size: 12px; color: var(--text2); }
+
+    /* Battle */
+    .battle-card {
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      overflow: hidden; background: rgba(0,0,0,0.3);
+    }
     .battle-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 16px; border-bottom: 0.5px solid var(--border); background: var(--surface2);
+      padding: 12px 18px; border-bottom: 1px solid var(--border);
+      background: var(--surface);
     }
-    .battle-title { font-size: 13px; font-weight: 600; }
-    .round-pill { font-size: 11px; padding: 4px 12px; border-radius: 20px; background: var(--blue-bg); color: var(--blue-text); font-weight: 600; }
-    .debate-log { display: flex; flex-direction: column; gap: 12px; padding: 16px; min-height: 240px; max-height: 380px; overflow-y: auto; aria-live: polite; }
-    .bubble-wrap { display: flex; gap: 8px; align-items: flex-start; }
+    .battle-title { font-size: 13px; font-weight: 700; font-family: 'Outfit'; letter-spacing: 1px; }
+    .round-pill {
+      font-size: 11px; padding: 4px 12px; border-radius: 100px;
+      background: var(--surface); color: var(--text2); font-weight: 600; font-family: 'Outfit';
+      border: 1px solid var(--border);
+    }
+    .debate-log {
+      display: flex; flex-direction: column; gap: 14px; padding: 18px;
+      min-height: 260px; max-height: 380px; overflow-y: auto; scroll-behavior: smooth;
+    }
+    .debate-log::-webkit-scrollbar { width: 5px; }
+    .debate-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+
+    .bubble-wrap { display: flex; gap: 10px; align-items: flex-end; animation: bubbleIn 0.25s ease; }
+    @keyframes bubbleIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
     .bubble-wrap.you-wrap { flex-direction: row-reverse; }
     .avatar {
-      width: 32px; height: 32px; border-radius: 50%;
+      width: 34px; height: 34px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      font-size: 12px; font-weight: 800; font-family: 'Outfit'; flex-shrink: 0;
     }
-    .avatar.ai-av { background: var(--coral-bg); color: var(--coral-text); }
-    .avatar.you-av { background: var(--blue-bg); color: var(--blue-text); }
-    .bubble { max-width: 78%; font-size: 13px; line-height: 1.65; padding: 10px 14px; border-radius: 14px; background: var(--surface2); color: var(--text); }
-    .bubble.ai-b { border-bottom-left-radius: 4px; }
-    .bubble.you-b { background: var(--blue); color: #fff; border-bottom-right-radius: 4px; }
-    .bubble.typing-b { color: var(--text3); font-style: italic; }
-    .pts-flash { font-size: 11px; font-weight: 600; color: var(--blue); text-align: right; padding: 0 16px 6px; }
-    .input-zone { border-top: 0.5px solid var(--border); padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .avatar.ai-av { background: var(--accent); color: #111; }
+    .avatar.you-av { background: #fff; color: #111; }
+    .bubble {
+      max-width: 75%; font-size: 14px; line-height: 1.6;
+      padding: 12px 16px; border-radius: 18px;
+    }
+    .bubble.ai-b { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+    .bubble.you-b { background: #fff; color: #111; border-bottom-right-radius: 4px; }
+    .bubble.typing-b { color: var(--text3); font-style: italic; display: flex; gap: 4px; align-items: center; }
+    .dot { width: 5px; height: 5px; background: var(--text3); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%,80%,100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    .pts-flash { font-size: 12px; font-weight: 700; font-family: 'Outfit'; color: var(--accent); text-align: right; padding: 0 18px 6px; }
+
+    .input-zone {
+      border-top: 1px solid var(--border); padding: 14px 18px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
     .quick-args { display: flex; flex-wrap: wrap; gap: 6px; }
     .qa-btn {
-      font-size: 11px; padding: 5px 11px; border: 0.5px solid var(--border2);
-      border-radius: 20px; background: none; cursor: pointer; color: var(--text2);
-      font-family: inherit; transition: all 0.15s;
+      font-size: 12px; font-weight: 500; padding: 5px 12px;
+      border: 1px solid var(--border); border-radius: 100px;
+      background: transparent; cursor: pointer; color: var(--text3);
+      font-family: 'Inter'; transition: all 0.2s; white-space: nowrap;
     }
-    .qa-btn:hover { background: var(--surface2); color: var(--text); }
+    .qa-btn:hover { border-color: var(--border-bright); color: #fff; }
     .send-row { display: flex; gap: 8px; }
     .arg-input {
-      flex: 1; font-size: 13px; padding: 10px 14px;
-      border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
-      background: var(--surface); color: var(--text); font-family: inherit;
-      outline: none; transition: border-color 0.15s;
+      flex: 1; font-size: 14px; padding: 11px 16px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: rgba(255,255,255,0.04); color: #fff; font-family: 'Inter';
+      outline: none; transition: all 0.2s;
     }
-    .arg-input:focus { border-color: var(--blue); }
+    .arg-input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.07); }
+    .arg-input::placeholder { color: var(--text3); }
     .fire-btn {
-      padding: 10px 20px; border-radius: var(--radius-sm);
-      background: var(--blue); color: #fff; border: none;
-      cursor: pointer; font-size: 13px; font-weight: 600;
-      font-family: inherit; transition: opacity 0.15s;
+      padding: 0 22px; border-radius: var(--radius);
+      background: #fff; color: #111; border: none;
+      cursor: pointer; font-size: 14px; font-weight: 700; font-family: 'Outfit';
+      transition: all 0.15s;
     }
     .fire-btn:hover { opacity: 0.85; }
-    .fire-btn:disabled { opacity: 0.4; cursor: default; }
-    .verdict-card { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; display: none; }
-    .verdict-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
-    .verdict-score { font-size: 24px; font-weight: 700; color: var(--blue); }
-    .verdict-title { font-size: 15px; font-weight: 600; }
-    .verdict-body { font-size: 13px; color: var(--text2); line-height: 1.65; margin-bottom: 14px; }
-    .play-again-btn {
-      font-size: 13px; padding: 8px 18px; border-radius: var(--radius-sm);
-      border: 0.5px solid var(--border2); background: none;
-      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    .fire-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Verdict */
+    .verdict-card {
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 2rem; display: none; background: var(--surface); text-align: center;
+      animation: fadeIn 0.4s ease;
     }
-    .play-again-btn:hover { background: var(--surface2); }
+    .verdict-score { font-size: 40px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+    .verdict-title { font-size: 22px; font-weight: 700; font-family: 'Outfit'; margin-bottom: 10px; }
+    .verdict-body { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .play-again-btn {
+      font-size: 14px; font-weight: 600; font-family: 'Outfit';
+      padding: 10px 28px; border-radius: 100px;
+      background: transparent; border: 1px solid var(--border-bright); color: #fff;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .play-again-btn:hover { background: var(--surface); }
+
     .hidden { display: none !important; }
 
-    /* Election Process Tab (Innovative: Core Problem Statement) */
-    .process-steps { display: flex; flex-direction: column; gap: 12px; }
+    /* Election Process */
+    .process-steps { display: flex; flex-direction: column; gap: 14px; }
     .process-step {
-      border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 1rem;
-      background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem;
+      background: var(--surface); transition: all 0.2s;
     }
-    .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .step-title { font-size: 14px; font-weight: 600; }
-    .step-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--blue-bg); color: var(--blue-text); }
-    .step-desc { font-size: 13px; color: var(--text2); line-height: 1.5; margin-bottom: 8px; }
+    .process-step:hover { border-color: var(--border-bright); }
+    .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .step-title { font-size: 16px; font-weight: 700; font-family: 'Outfit'; }
+    .step-badge {
+      font-size: 11px; font-weight: 700; font-family: 'Outfit'; padding: 3px 10px;
+      border-radius: 100px; background: var(--surface); color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .step-desc { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
     .explain-btn {
-      font-size: 11px; padding: 5px 11px; border: 0.5px solid var(--border2);
-      border-radius: 20px; background: none; cursor: pointer; color: var(--blue-text);
-      font-family: inherit; transition: all 0.15s;
+      font-size: 12px; font-weight: 600; padding: 7px 14px;
+      border: 1px solid rgba(232,196,124,0.3); border-radius: 100px;
+      background: rgba(232,196,124,0.08); cursor: pointer; color: var(--accent);
+      font-family: 'Inter'; transition: all 0.2s;
     }
-    .explain-btn:hover { background: var(--blue-bg); }
-    .explain-output { font-size: 12px; color: var(--text); padding: 8px; background: var(--surface); border-radius: var(--radius-sm); margin-top: 8px; display: none; }
+    .explain-btn:hover { background: rgba(232,196,124,0.15); border-color: rgba(232,196,124,0.5); }
+    .explain-output {
+      font-size: 13px; color: var(--text); padding: 14px;
+      background: rgba(255,255,255,0.03); border-left: 2px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-top: 12px; display: none; line-height: 1.6;
+    }
 
-    /* Voter Checker Tab (Innovative: Interactive Tool) */
-    .checker-form { display: flex; flex-direction: column; gap: 12px; }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-label { font-size: 12px; font-weight: 600; color: var(--text2); }
+    /* Voter Checker */
+    .checker-box { max-width: 460px; margin: 0 auto; }
+    .checker-form { display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; }
     .form-input {
-      padding: 10px 14px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
-      font-size: 13px; font-family: inherit; background: var(--surface); color: var(--text);
+      padding: 11px 14px; border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 14px; font-family: 'Inter'; background: rgba(255,255,255,0.04); color: #fff;
+      transition: all 0.2s;
     }
-    .form-input:focus { border-color: var(--blue); outline: none; }
-    .form-checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); }
+    .form-input:focus { border-color: var(--success); outline: none; }
+    .checkbox-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .checkbox-wrapper input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--success); }
+    .checkbox-label { font-size: 13px; color: var(--text); cursor: pointer; }
     .check-btn {
-      padding: 10px 20px; border-radius: var(--radius-sm);
-      background: var(--green); color: #fff; border: none;
-      cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit;
+      padding: 12px 20px; border-radius: var(--radius); margin-top: 4px;
+      background: var(--success); color: #111; border: none;
+      cursor: pointer; font-size: 14px; font-weight: 700; font-family: 'Outfit';
+      transition: all 0.15s;
     }
+    .check-btn:hover { opacity: 0.85; }
     .checker-result {
-      margin-top: 16px; padding: 12px; border-radius: var(--radius-sm);
-      font-size: 13px; line-height: 1.5; display: none;
+      margin-top: 16px; padding: 14px; border-radius: var(--radius);
+      font-size: 14px; font-weight: 500; display: none;
     }
-    .checker-result.eligible { background: var(--green-bg); color: var(--green); }
-    .checker-result.ineligible { background: var(--coral-bg); color: var(--coral-text); }
+    .checker-result.eligible { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: var(--success); }
+    .checker-result.ineligible { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: var(--danger); }
 
-    /* Responsive */
-    @media (max-width: 520px) {
+    @media (max-width: 600px) {
       .stance-grid { grid-template-columns: 1fr; }
-      .tabs { padding: 0; }
+      .hero h1 { font-size: 24px; }
     }
   </style>
 </head>
 <body>
+
   <!-- Header -->
   <header>
     <div class="logo">
@@ -211,17 +320,19 @@
       Election Arena
     </div>
     <div class="stat-row">
-      <div class="stat">Points <b id="pts">0</b></div>
-      <div class="stat">Wins <b id="wins">0</b></div>
+      <div class="stat">PTS <b id="pts">0</b></div>
+      <div class="stat">WINS <b id="wins">0</b></div>
     </div>
   </header>
 
-  <!-- Facts Ticker (Innovative) -->
-  <div class="facts-ticker" id="facts-ticker">
-    <span>Loading election facts...</span>
+  <!-- Facts Ticker -->
+  <div class="ticker-wrapper">
+    <div class="facts-ticker" id="facts-ticker">
+      <span>Loading election facts...</span>
+    </div>
   </div>
 
-  <!-- Tabs (Innovative: Multi-feature navigation) -->
+  <!-- Tabs -->
   <div class="tabs" role="tablist" aria-label="Main features">
     <button class="tab" role="tab" aria-selected="true" data-tab="debate" tabindex="0">Debate Arena</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="process" tabindex="-1">Election Process</button>
@@ -229,184 +340,158 @@
   </div>
 
   <main>
-    <!-- Debate Arena Tab -->
+    <!-- Debate Arena -->
     <div class="tab-content active" id="tab-debate" role="tabpanel">
-      <div class="hero" style="text-align: center; padding-bottom: 4px;">
-        <h1 style="font-size: 26px; font-weight: 700; margin-bottom: 6px;">&#128293; Debate. Argue. Learn.</h1>
-        <p style="font-size: 14px; color: var(--text2);">Pick a hot election topic, choose your stance, and go 3 rounds with an AI that never backs down.</p>
+      <div class="hero">
+        <h1>Debate. Argue. Learn.</h1>
+        <p>Pick a hot election topic, choose your stance, and go 3 rounds with an AI that never backs down.</p>
       </div>
-
       <div class="card" id="topic-card">
         <div class="section-label">STEP 1 — CHOOSE YOUR BATTLE</div>
         <div class="topic-chips" id="chips"></div>
       </div>
-
-      <div class="card hidden" id="stance-card">
+      <div class="card hidden" id="stance-card" style="margin-top:14px">
         <div class="section-label">STEP 2 — PICK YOUR SIDE</div>
         <div class="stance-grid" id="stance-grid"></div>
       </div>
-
-      <div class="battle-card hidden" id="battle-zone">
+      <div class="battle-card hidden" id="battle-zone" style="margin-top:14px">
         <div class="battle-header">
           <span class="battle-title">YOU vs AI</span>
-          <span class="round-pill" id="round-pill">Round 1 of 3</span>
+          <span class="round-pill" id="round-pill">Round 1 / 3</span>
         </div>
         <div class="debate-log" id="debate-log" aria-live="polite"></div>
         <div class="input-zone">
           <div class="quick-args" id="quick-args"></div>
           <div class="send-row">
-            <input class="arg-input" id="arg-input" placeholder="Make your argument..." aria-label="Your argument input" />
-            <button class="fire-btn" id="fire-btn">Fire &#128293;</button>
+            <input class="arg-input" id="arg-input" placeholder="Type your argument..." autocomplete="off" aria-label="Your argument" />
+            <button class="fire-btn" id="fire-btn">Fire</button>
           </div>
         </div>
       </div>
-
-      <div class="verdict-card" id="verdict-card">
-        <div class="verdict-top">
-          <span class="verdict-score" id="v-score"></span>
-          <span class="verdict-title" id="v-title"></span>
-        </div>
+      <div class="verdict-card" id="verdict-card" style="margin-top:14px">
+        <div class="verdict-score" id="v-score"></div>
+        <div class="verdict-title" id="v-title"></div>
         <p class="verdict-body" id="v-body"></p>
-        <button class="play-again-btn" onclick="resetAll()" aria-label="Start new debate">&#8635; Debate another topic</button>
+        <button class="play-again-btn" onclick="resetAll()">&#8635; Debate another topic</button>
       </div>
     </div>
 
-    <!-- Election Process Tab (Innovative: Core Problem Statement) -->
+    <!-- Election Process -->
     <div class="tab-content" id="tab-process" role="tabpanel">
-      <div class="hero" style="text-align: center; padding-bottom: 4px;">
-        <h1 style="font-size: 26px; font-weight: 700; margin-bottom: 6px;">&#128203; Indian Election Process</h1>
-        <p style="font-size: 14px; color: var(--text2);">Interactive step-by-step guide for first-time voters (18-25)</p>
+      <div class="hero">
+        <h1>Indian Election Process</h1>
+        <p>Interactive step-by-step guide for first-time voters (18-25)</p>
       </div>
       <div class="process-steps" id="process-steps"></div>
     </div>
 
-    <!-- Voter Checker Tab (Innovative: Interactive Tool) -->
+    <!-- Voter Checker -->
     <div class="tab-content" id="tab-checker" role="tabpanel">
-      <div class="hero" style="text-align: center; padding-bottom: 4px;">
-        <h1 style="font-size: 26px; font-weight: 700; margin-bottom: 6px;">&#9989; Voter Eligibility Checker</h1>
-        <p style="font-size: 14px; color: var(--text2);">Check if you're eligible to vote in Indian elections</p>
+      <div class="hero">
+        <h1>Voter Eligibility Checker</h1>
+        <p>Quickly check if you're eligible to vote in Indian elections</p>
       </div>
-      <div class="card checker-form" id="checker-form">
-        <div class="form-group">
-          <label class="form-label" for="checker-age">Your Age</label>
-          <input type="number" id="checker-age" class="form-input" min="16" max="100" placeholder="e.g. 19" aria-label="Your age">
-        </div>
-        <div class="form-group">
-          <label class="form-label for="checker-state">State</label>
-          <input type="text" id="checker-state" class="form-input" placeholder="e.g. Tamil Nadu" aria-label="Your state">
-        </div>
-        <div class="form-group">
-          <label class="form-checkbox">
-            <input type="checkbox" id="checker-voter-id"> I have a valid Voter ID (EPIC)
+      <div class="card checker-box">
+        <div class="checker-form" id="checker-form">
+          <div class="form-group">
+            <label class="form-label" for="checker-age">Your Age</label>
+            <input type="number" id="checker-age" class="form-input" min="16" max="100" placeholder="e.g. 19">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="checker-state">State (optional)</label>
+            <input type="text" id="checker-state" class="form-input" placeholder="e.g. Tamil Nadu">
+          </div>
+          <label class="checkbox-wrapper">
+            <input type="checkbox" id="checker-voter-id">
+            <span class="checkbox-label">I have a valid Voter ID (EPIC)</span>
           </label>
+          <button class="check-btn" onclick="checkEligibility()">Check My Eligibility</button>
+          <div class="checker-result" id="checker-result"></div>
         </div>
-        <button class="check-btn" onclick="checkEligibility()" aria-label="Check eligibility">Check My Eligibility</button>
-        <div class="checker-result" id="checker-result"></div>
       </div>
     </div>
   </main>
 
   <script>
-    // ===================== TABS (Innovative Navigation) =====================
+    // ===================== TABS =====================
     const tabs = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        tabs.forEach(t => { t.setAttribute('aria-selected', 'false'); t.tabIndex = -1; });
+        tabs.forEach(t => { t.setAttribute('aria-selected','false'); t.tabIndex = -1; });
         tabContents.forEach(c => c.classList.remove('active'));
-        tab.setAttribute('aria-selected', 'true'); tab.tabIndex = 0;
+        tab.setAttribute('aria-selected','true'); tab.tabIndex = 0;
         document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
       });
       tab.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
           const idx = Array.from(tabs).indexOf(tab);
-          const nextIdx = e.key === 'ArrowLeft' ? (idx - 1 + tabs.length) % tabs.length : (idx + 1) % tabs.length;
-          tabs[nextIdx].click();
-          tabs[nextIdx].focus();
+          const next = e.key === 'ArrowLeft' ? (idx-1+tabs.length)%tabs.length : (idx+1)%tabs.length;
+          tabs[next].click(); tabs[next].focus();
         }
       });
     });
 
-    // ===================== FACTS TICKER (Innovative) =====================
+    // ===================== FACTS TICKER =====================
     async function loadFacts() {
       try {
         const res = await fetch('/api/election-facts');
         const { facts } = await res.json();
-        const ticker = document.getElementById('facts-ticker');
-        ticker.innerHTML = `<span>${facts.join(' • ')}</span>`;
-      } catch (e) { /* Fallback handled by server */ }
+        document.getElementById('facts-ticker').innerHTML = `<span>${facts.join(' · ')}</span>`;
+      } catch(e) {}
     }
     loadFacts();
 
-    // ===================== DEBATE ARENA (Updated to use Gemini via server) =====================
+    // ===================== DEBATE =====================
     const topics = [
-      {
-        id: 'voting-age', label: 'Lower voting age to 16?',
-        sides: [
-          { title: 'Yes — 16-year-olds should vote', sub: 'They pay taxes, deserve a voice' },
-          { title: 'No — 18 is the right threshold', sub: 'Maturity and civic readiness matter' }
-        ],
-        hints: ['They are affected by long-term policies', 'Brain development is still ongoing', 'School civics already teaches them', 'Several countries already allow it']
+      { id:'voting-age', label:'Lower voting age to 16?',
+        sides:[{title:'Yes — 16-year-olds should vote',sub:'They pay taxes, deserve a voice'},
+               {title:'No — 18 is the right threshold',sub:'Maturity and civic readiness matter'}],
+        hints:['They are affected by long-term policies','Brain development is ongoing','Several countries already allow it']
       },
-      {
-        id: 'evm', label: 'EVMs are fully trustworthy?',
-        sides: [
-          { title: 'EVMs are secure and reliable', sub: 'ECI safeguards are strong enough' },
-          { title: 'Paper ballots are safer', sub: 'Transparency and auditability matter' }
-        ],
-        hints: ['Tamper-proof hardware by design', 'VVPAT paper trail is a backup', 'Several democracies use them', 'Independent audits are conducted']
+      { id:'evm', label:'Are EVMs fully trustworthy?',
+        sides:[{title:'EVMs are secure & reliable',sub:'ECI safeguards are strong'},
+               {title:'Paper ballots are safer',sub:'Transparency and auditability matter'}],
+        hints:['Tamper-proof hardware by design','VVPAT paper trail is a backup','Independent audits are conducted']
       },
-      {
-        id: 'nota', label: 'NOTA should trigger re-election?',
-        sides: [
-          { title: 'NOTA winner means fresh elections', sub: 'Give voters a real reject option' },
-          { title: 'NOTA should stay symbolic', sub: 'Stability over protest votes' }
-        ],
-        hints: ['Candidates must be held accountable', 'Re-elections are costly and slow', 'It forces better candidate selection', 'Sends a powerful democratic message']
+      { id:'nota', label:'NOTA should trigger re-election?',
+        sides:[{title:'NOTA winner = fresh elections',sub:'Give voters a real reject option'},
+               {title:'NOTA should stay symbolic',sub:'Stability over protest votes'}],
+        hints:['Candidates must be accountable','Re-elections are costly/slow','Forces better candidate selection']
       },
-      {
-        id: 'compulsory', label: 'Voting should be compulsory?',
-        sides: [
-          { title: 'Yes — make voting mandatory', sub: 'Civic duty, stronger democracy' },
-          { title: 'No — voting is a free choice', sub: 'The right to abstain also matters' }
-        ],
-        hints: ['Australia has done it successfully', 'Coerced votes lose legitimacy', 'Low turnout skews representation', 'Freedom includes not voting']
+      { id:'compulsory', label:'Should voting be compulsory?',
+        sides:[{title:'Yes — make voting mandatory',sub:'Civic duty, stronger democracy'},
+               {title:'No — voting is a free choice',sub:'The right to abstain matters'}],
+        hints:['Australia has done it successfully','Low turnout skews representation','Coerced votes lose legitimacy']
       },
-      {
-        id: 'social-media', label: 'Ban paid political ads online?',
-        sides: [
-          { title: 'Yes — ban all paid political ads', sub: 'Stops misinformation and micro-targeting' },
-          { title: 'No — allow regulated online ads', sub: 'Reach voters where they actually are' }
-        ],
-        hints: ['Cambridge Analytica is a warning', 'Small parties need cheap outreach', 'Micro-targeting manipulates voters', 'ECI cannot monitor it all']
+      { id:'social-media', label:'Ban paid political online ads?',
+        sides:[{title:'Yes — ban them all',sub:'Stops misinformation and micro-targeting'},
+               {title:'No — allow regulated ads',sub:'Reach voters where they are'}],
+        hints:['Cambridge Analytica is a warning','Micro-targeting manipulates voters','Small parties need cheap outreach']
       }
     ];
 
-    let state = { topic: null, yourSide: null, aiSide: null, round: 0, maxRounds: 3, points: 0, wins: 0, history: [], busy: false };
+    let state = {topic:null,yourSide:null,aiSide:null,round:0,maxRounds:3,points:0,wins:0,history:[],busy:false};
 
     function renderChips() {
-      const c = document.getElementById('chips');
-      c.innerHTML = '';
+      const c = document.getElementById('chips'); c.innerHTML = '';
       topics.forEach(t => {
         const b = document.createElement('button');
-        b.className = 'chip' + (state.topic?.id === t.id ? ' active' : '');
-        b.textContent = t.label;
-        b.setAttribute('aria-label', `Select topic: ${t.label}`);
-        b.onclick = () => selectTopic(t);
+        b.className = 'chip' + (state.topic?.id===t.id ? ' active' : '');
+        b.textContent = t.label; b.onclick = () => selectTopic(t);
         c.appendChild(b);
       });
     }
 
     function selectTopic(t) {
-      state.topic = t; state.yourSide = null; state.aiSide = null; state.round = 0; state.history = [];
+      state.topic=t; state.yourSide=null; state.aiSide=null; state.round=0; state.history=[];
       renderChips();
       document.getElementById('battle-zone').classList.add('hidden');
-      document.getElementById('verdict-card').style.display = 'none';
-      document.getElementById('debate-log').innerHTML = '';
-      const sc = document.getElementById('stance-card');
-      sc.classList.remove('hidden');
-      document.getElementById('stance-grid').innerHTML = t.sides.map((s, i) => `
-        <div class="stance-card" id="sc${i}" onclick="pickStance(${i})" role="button" aria-label="Select stance: ${s.title}">
+      document.getElementById('verdict-card').style.display='none';
+      document.getElementById('debate-log').innerHTML='';
+      document.getElementById('stance-card').classList.remove('hidden');
+      document.getElementById('stance-grid').innerHTML = t.sides.map((s,i) =>
+        `<div class="stance-card" id="sc${i}" onclick="pickStance(${i})">
           <div class="stance-owner you">YOUR STANCE</div>
           <div class="stance-title">${s.title}</div>
           <div class="stance-sub">${s.sub}</div>
@@ -415,13 +500,12 @@
 
     function pickStance(i) {
       state.yourSide = state.topic.sides[i];
-      state.aiSide = state.topic.sides[1 - i];
-      document.querySelectorAll('.stance-card').forEach((c, idx) => {
-        c.querySelector('.stance-owner').textContent = idx === i ? 'YOUR STANCE' : 'AI OPPONENT';
-        c.querySelector('.stance-owner').className = 'stance-owner ' + (idx === i ? 'you' : 'ai');
-        c.className = 'stance-card ' + (idx === i ? 'chosen-you' : 'chosen-ai');
+      state.aiSide = state.topic.sides[1-i];
+      document.querySelectorAll('.stance-card').forEach((c,idx) => {
+        c.querySelector('.stance-owner').textContent = idx===i ? 'YOUR STANCE' : 'AI OPPONENT';
+        c.querySelector('.stance-owner').className = 'stance-owner ' + (idx===i ? 'you' : 'ai');
+        c.className = 'stance-card ' + (idx===i ? 'chosen-you' : 'chosen-ai');
         c.onclick = null;
-        c.setAttribute('aria-label', `Selected stance: ${state.topic.sides[idx].title}`);
       });
       setTimeout(startDebate, 400);
     }
@@ -429,32 +513,32 @@
     function startDebate() {
       state.round = 1;
       document.getElementById('battle-zone').classList.remove('hidden');
-      document.getElementById('verdict-card').style.display = 'none';
+      document.getElementById('verdict-card').style.display='none';
       updateUI(); renderHints();
-      document.getElementById('debate-log').innerHTML = '';
-      addBubble('ai', `I'm locked in: "${state.aiSide.title}". You believe ${state.yourSide.title.toLowerCase()} — prove it. Make your opening argument!`);
-      document.getElementById('arg-input').focus();
+      document.getElementById('debate-log').innerHTML='';
+      addBubble('ai',`I'm locked in: "${state.aiSide.title}". You believe ${state.yourSide.title.toLowerCase()} — prove it!`);
+      setTimeout(() => document.getElementById('arg-input').focus(), 100);
     }
 
     function updateUI() {
-      document.getElementById('round-pill').textContent = `Round ${state.round} of ${state.maxRounds}`;
+      document.getElementById('round-pill').textContent = `Round ${state.round} / ${state.maxRounds}`;
       document.getElementById('pts').textContent = state.points;
       document.getElementById('wins').textContent = state.wins;
     }
 
     function renderHints() {
-      document.getElementById('quick-args').innerHTML = (state.topic?.hints || []).map(h =>
-        `<button class="qa-btn" onclick="document.getElementById('arg-input').value='${h.replace(/'/g,"\\'")}';document.getElementById('arg-input').focus()" aria-label="Use hint: ${h}">+ ${h}</button>`
+      document.getElementById('quick-args').innerHTML = (state.topic?.hints||[]).map(h =>
+        `<button class="qa-btn" onclick="document.getElementById('arg-input').value='${h.replace(/'/g,"\\'")}';document.getElementById('arg-input').focus()">+ ${h}</button>`
       ).join('');
     }
 
-    function addBubble(who, text, typing = false) {
+    function addBubble(who, text, typing=false) {
       const log = document.getElementById('debate-log');
       const wrap = document.createElement('div');
       wrap.className = `bubble-wrap ${who}-wrap`;
-      wrap.innerHTML = `<div class="avatar ${who}-av">${who === 'ai' ? 'AI' : 'You'}</div><div class="bubble ${who}-b${typing ? ' typing-b' : ''}">${text}</div>`;
-      log.appendChild(wrap);
-      log.scrollTop = log.scrollHeight;
+      const html = typing ? `<div class="dot"></div><div class="dot"></div><div class="dot"></div>` : text;
+      wrap.innerHTML = `<div class="avatar ${who}-av">${who==='ai'?'AI':'YOU'}</div><div class="bubble ${who}-b${typing?' typing-b':''}">${html}</div>`;
+      log.appendChild(wrap); log.scrollTop = log.scrollHeight;
       return wrap;
     }
 
@@ -463,146 +547,123 @@
       const btn = document.getElementById('fire-btn');
       const arg = input.value.trim();
       if (!arg || state.busy) return;
-      input.value = ''; state.busy = true; btn.disabled = true;
+      input.value=''; state.busy=true; btn.disabled=true;
       addBubble('you', arg);
-      state.history.push({ role: 'user', content: arg });
-      const typingWrap = addBubble('ai', 'Cooking up a comeback...', true);
-      const isLast = state.round >= state.maxRounds;
+      state.history.push({role:'user',content:arg});
+      const typingWrap = addBubble('ai','',true);
       try {
         const res = await fetch('/api/debate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({
-            history: state.history.slice(0, -1),
-            topic: state.topic.label,
-            yourSide: state.yourSide.title,
-            aiSide: state.aiSide.title,
-            round: state.round,
-            maxRounds: state.maxRounds
+            history:state.history.slice(0,-1), topic:state.topic.label,
+            yourSide:state.yourSide.title, aiSide:state.aiSide.title,
+            round:state.round, maxRounds:state.maxRounds
           })
         });
-        const { text: raw } = await res.json();
+        const {text:raw} = await res.json();
         const vm = raw.match(/VERDICT:(\{.*\})/);
-        const display = raw.replace(/VERDICT:\{.*\}/, '').trim();
-        typingWrap.querySelector('.bubble').textContent = display;
-        typingWrap.querySelector('.bubble').classList.remove('typing-b');
-        state.history.push({ role: 'assistant', content: display });
+        const display = raw.replace(/VERDICT:\{.*\}/,'').trim();
+        const bubble = typingWrap.querySelector('.bubble');
+        bubble.innerHTML = display; bubble.classList.remove('typing-b');
+        state.history.push({role:'assistant',content:display});
         if (vm) {
           try {
             const v = JSON.parse(vm[1]);
-            const gained = Math.min(10, Math.max(0, Math.round(v.userScore)));
+            const gained = Math.min(10,Math.max(0,Math.round(v.userScore)));
             state.points += gained;
-            if (v.winner === 'you') state.wins++;
-            updateUI(); showVerdict(v, gained);
-          } catch (e) {}
+            if (v.winner==='you') state.wins++;
+            updateUI(); setTimeout(()=>showVerdict(v,gained),1200);
+          } catch(e){}
         } else {
-          const p = Math.floor(Math.random() * 3) + 3;
+          const p = Math.floor(Math.random()*3)+3;
           state.points += p;
           const pf = document.createElement('div');
-          pf.className = 'pts-flash'; pf.textContent = `+${p} pts for arguing`;
+          pf.className='pts-flash'; pf.textContent=`+${p} pts`;
           document.getElementById('debate-log').appendChild(pf);
-          document.getElementById('debate-log').scrollTop = 9999;
+          document.getElementById('debate-log').scrollTop=9999;
           state.round++; updateUI();
         }
-      } catch (e) {
-        typingWrap.querySelector('.bubble').textContent = 'Network error. Try again.';
+      } catch(e) {
+        typingWrap.querySelector('.bubble').textContent='Network error. Try again.';
         typingWrap.querySelector('.bubble').classList.remove('typing-b');
       }
-      state.busy = false; btn.disabled = false; input.focus();
+      state.busy=false; btn.disabled=false; input.focus();
     }
 
     function showVerdict(v, gained) {
       document.getElementById('battle-zone').classList.add('hidden');
-      const vc = document.getElementById('verdict-card'); vc.style.display = 'block';
-      document.getElementById('v-score').textContent = `+${gained} pts`;
-      document.getElementById('v-title').textContent = { you: 'You won!', ai: 'AI won.', draw: "It's a draw!" }[v.winner] || 'Round over.';
-      document.getElementById('v-body').textContent = v.summary + ' Pick another topic to keep the streak going!';
+      const vc = document.getElementById('verdict-card'); vc.style.display='block';
+      let t='Round Over';
+      if(v.winner==='you') t='Victory!';
+      if(v.winner==='ai') t='AI Wins.';
+      if(v.winner==='draw') t="It's a Draw.";
+      document.getElementById('v-score').textContent=`+${gained} PTS`;
+      document.getElementById('v-title').textContent=t;
+      document.getElementById('v-body').textContent=v.summary;
       updateUI();
     }
 
     function resetAll() {
-      state.topic = null; state.yourSide = null; state.aiSide = null; state.round = 0; state.history = [];
+      state.topic=null; state.yourSide=null; state.aiSide=null; state.round=0; state.history=[];
       document.getElementById('stance-card').classList.add('hidden');
       document.getElementById('battle-zone').classList.add('hidden');
-      document.getElementById('verdict-card').style.display = 'none';
+      document.getElementById('verdict-card').style.display='none';
       renderChips();
     }
 
     document.getElementById('fire-btn').onclick = fire;
-    document.getElementById('arg-input').addEventListener('keydown', e => { if (e.key === 'Enter') fire(); });
+    document.getElementById('arg-input').addEventListener('keydown', e => { if(e.key==='Enter') fire(); });
     renderChips();
 
-    // ===================== ELECTION PROCESS (Innovative: Core Problem Statement) =====================
+    // ===================== ELECTION PROCESS =====================
     const processSteps = [
-      { id: 'registration', title: 'Voter Registration', badge: 'Step 1' },
-      { id: 'campaigning', title: 'Campaigning & MCC', badge: 'Step 2' },
-      { id: 'evm', title: 'Voting (EVM/VVPAT)', badge: 'Step 3' },
-      { id: 'counting', title: 'Vote Counting', badge: 'Step 4' },
-      { id: 'post', title: 'Result & Swearing In', badge: 'Step 5' }
+      {id:'registration',title:'Voter Registration',badge:'Step 1'},
+      {id:'campaigning',title:'Campaigning & MCC',badge:'Step 2'},
+      {id:'evm',title:'Voting (EVM/VVPAT)',badge:'Step 3'},
+      {id:'counting',title:'Vote Counting',badge:'Step 4'},
+      {id:'post',title:'Result & Swearing In',badge:'Step 5'}
     ];
-
     const stepsContainer = document.getElementById('process-steps');
     processSteps.forEach(step => {
-      const div = document.createElement('div');
-      div.className = 'process-step';
+      const div = document.createElement('div'); div.className='process-step';
       div.innerHTML = `
         <div class="step-header">
           <div class="step-title">${step.title}</div>
           <div class="step-badge">${step.badge}</div>
         </div>
-        <div class="step-desc">Click "Explain Simply" for a 18-25 friendly explanation of this step.</div>
-        <button class="explain-btn" onclick="loadStepExplanation('${step.id}', this)" aria-label="Explain ${step.title} simply">Explain Simply ✨</button>
-        <div class="explain-output" id="explain-${step.id}"></div>
-      `;
+        <div class="step-desc">Click below for a simplified, jargon-free explanation.</div>
+        <button class="explain-btn" onclick="loadStep('${step.id}',this)">✨ Explain Simply</button>
+        <div class="explain-output" id="explain-${step.id}"></div>`;
       stepsContainer.appendChild(div);
     });
 
-    async function loadStepExplanation(stepId, btn) {
-      const output = document.getElementById(`explain-${stepId}`);
-      btn.disabled = true;
-      btn.textContent = 'Loading...';
+    async function loadStep(id, btn) {
+      const out = document.getElementById(`explain-${id}`);
+      if(out.style.display==='block'){out.style.display='none';return;}
+      btn.disabled=true; btn.textContent='Loading...';
       try {
-        const res = await fetch(`/api/election-process?step=${stepId}`);
-        const { text } = await res.json();
-        output.textContent = text;
-        output.style.display = 'block';
-      } catch (e) {
-        output.textContent = 'Failed to load explanation.';
-        output.style.display = 'block';
-      }
-      btn.disabled = false;
-      btn.textContent = 'Explain Simply ✨';
+        const res = await fetch(`/api/election-process?step=${id}`);
+        const {text} = await res.json();
+        out.textContent=text; out.style.display='block';
+      } catch(e) { out.textContent='Failed to load.'; out.style.display='block'; }
+      btn.disabled=false; btn.textContent='✨ Explain Simply';
     }
 
-    // ===================== VOTER CHECKER (Innovative: Interactive Tool) =====================
+    // ===================== VOTER CHECKER =====================
     async function checkEligibility() {
       const age = parseInt(document.getElementById('checker-age').value);
-      const state = document.getElementById('checker-state').value.trim();
-      const hasVoterId = document.getElementById('checker-voter-id').checked;
-      const resultDiv = document.getElementById('checker-result');
-      
-      if (!age || age < 16) {
-        resultDiv.textContent = 'Please enter a valid age (16+)';
-        resultDiv.className = 'checker-result ineligible';
-        resultDiv.style.display = 'block';
-        return;
-      }
-
+      const st = document.getElementById('checker-state').value.trim();
+      const hasId = document.getElementById('checker-voter-id').checked;
+      const r = document.getElementById('checker-result');
+      if(!age||age<16){r.textContent='Please enter a valid age (16+).';r.className='checker-result ineligible';r.style.display='block';return;}
       try {
-        const res = await fetch('/api/check-eligibility', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ age, hasVoterId, state })
+        const res = await fetch('/api/check-eligibility',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({age,hasVoterId:hasId,state:st})
         });
-        const { eligible, message } = await res.json();
-        resultDiv.textContent = message;
-        resultDiv.className = `checker-result ${eligible ? 'eligible' : 'ineligible'}`;
-        resultDiv.style.display = 'block';
-      } catch (e) {
-        resultDiv.textContent = 'Failed to check eligibility.';
-        resultDiv.className = 'checker-result ineligible';
-        resultDiv.style.display = 'block';
-      }
+        const {eligible,message} = await res.json();
+        r.textContent=message; r.className=`checker-result ${eligible?'eligible':'ineligible'}`; r.style.display='block';
+      } catch(e) { r.textContent='Network error.'; r.className='checker-result ineligible'; r.style.display='block'; }
     }
   </script>
 </body>
