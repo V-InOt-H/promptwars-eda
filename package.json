@@ -1,0 +1,18 @@
+{
+  "name": "election-debate-arena",
+  "version": "1.0.0",
+  "description": "PromptWars Challenge 2: Election Debate Arena + Process Assistant",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  }
+}
